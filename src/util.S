@@ -102,3 +102,31 @@ msExit:						sts miliSec, r24
                   sts miliSec+1, r25
                   restoreContext
                   reti
+
+
+.global setTimer0msInt
+setTimer0msInt:   cli   
+                  push r31
+                  push r30
+                  push r24               
+                  clr r24
+                  ori	r24, (1 << WGM01)
+                  out	_SFR_IO_ADDR(TCCR0A), r24
+                  clr r24
+                  ori	r24, (1 << CS01) | (1 << CS00)
+                  out	_SFR_IO_ADDR(TCCR0B), r24
+                  ldi	r24, 0xF9	; 249
+                  out	_SFR_IO_ADDR(OCR0A), r24                 
+                  clr r24
+                  out	_SFR_IO_ADDR(TCNT0), r24
+                  ldi	r30, TIMSK0
+                  ldi	r31, 0
+                  ld	r24, Z
+                  ori	r24, (1 << OCIE0A)
+                  st	Z, r24
+                  pop r24
+                  pop r30
+                  pop r31
+                  sei
+                  ret
+                  

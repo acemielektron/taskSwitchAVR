@@ -11,6 +11,7 @@
 		#endif // __cplusplus
 
 		extern volatile bool newSecond;
+		void setTimer0msInt();
 
 		#ifdef __cplusplus
 		}

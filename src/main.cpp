@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "util.h"
 
+/*
 void setup()
 {
 	asm("cli\n"); // Disable interrupts
@@ -20,11 +21,12 @@ void setup()
 	TIMSK0 |= (1 << OCIE0A); // –|–|–|–|–|OCIE0B|OCIE0A|TOIE0 -> Enable interupt on timer0 compare A match interrupt flag
 	asm("sei\n"); // Enable interrupts
 }
+*/
 
 int main()
 {
 	int8_t seconds = 0, minutes = 0, hours = 0;
-	setup();
+	setTimer0msInt();
 	Serial.print("Start\n");	
 	for (;;) // main loop
 	{

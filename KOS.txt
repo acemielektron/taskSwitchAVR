@@ -1,0 +1,103 @@
+// http://kevincuzner.com/2015/12/31/writing-a-preemptive-task-scheduler-for-avr/
+
+// -----------------------------------------------------------------------
+typedef enum { TASK_READY, TASK_SEMAPHORE, TASK_QUEUE } KOS_TaskStatus;
+
+typedef struct KOS_Task {
+    void *sp;
+    KOS_TaskStatus status;
+    struct KOS_Task *next;
+    void *status_pointer;
+} KOS_Task;
+
+// ------------------------------------------------------------------------
+typedef void (*KOS_TaskFn)(void);
+
+extern KOS_Task *kos_current_task;
+
+/**
+ * Initializes the KOS kernel
+ */
+void kos_init(void);
+
+/**
+ * Creates a new task
+ * Note: Not safe
+ */
+void kos_new_task(KOS_TaskFn task, void *sp);
+
+/**
+ * Puts KOS in ISR mode
+ * Note: Not safe, assumes non-nested isrs
+ */
+void kos_isr_enter(void);
+
+/**
+ * Leaves ISR mode, possibly executing the dispatcher
+ * Note: Not safe, assumes non-nested isrs
+ */
+void kos_isr_exit(void);
+
+/**
+ * Runs the kernel
+ */
+void kos_run(void);
+
+/**
+ * Runs the scheduler
+ */
+void kos_schedule(void);
+
+/**
+ * Dispatches the passed task, saving the context of the current task
+ */
+void kos_dispatch(KOS_Task *next);
+
+// ------------------------------------------------------------------------
+static KOS_Task tasks[KOS_MAX_TASKS + 1];
+static uint8_t next_task = 0;
+static KOS_Task *task_head;
+KOS_Task *kos_current_task;
+
+static uint8_t kos_idle_task_stack[KOS_IDLE_TASK_STACK];
+static void kos_idle_task(void)
+{
+    while (1) { }
+}
+
+void kos_init(void)
+{
+    kos_new_task(&kos_idle_task, &kos_idle_task_stack[KOS_IDLE_TASK_STACK - 1]);
+}
+
+void kos_new_task(KOS_TaskFn task, void *sp)
+{
+    int8_t i;
+    uint8_t *stack = sp;
+    KOS_Task *tcb;
+
+    //make space for pc, sreg, and 32 registers
+    stack[0] = (uint16_t)task & 0xFF;
+    stack[-1] = (uint16_t)task >> 8;
+    for (i = -2; i > -34; i--)
+    {
+        stack[i] = 0;
+    }
+    stack[-34] = 0x80; //sreg, interrupts enabled
+    
+    //create the task structure
+    tcb = &tasks[next_task++];
+    tcb->sp = stack - 35;
+    tcb->status = TASK_READY;
+
+    //insert into the task list as the new highest priority task
+    if (task_head)
+    {
+        tcb->next = task_head;
+        task_head = tcb;
+    }
+    else
+    {
+        task_head = tcb;
+    }
+}

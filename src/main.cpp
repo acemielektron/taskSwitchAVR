@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "util.h"
+#include "taskCtl.h"
 
 /*
 void setup()
@@ -22,31 +23,14 @@ void setup()
 	asm("sei\n"); // Enable interrupts
 }
 */
+#define TIME_TASK_STACK_SIZE	50
 
-int main()
+uint8_t timeTaskStack[TIME_TASK_STACK_SIZE];
+int8_t seconds = 0, minutes = 0, hours = 0;
+
+void printTime()
 {
-	int8_t seconds = 0, minutes = 0, hours = 0;
-	setTimer0msInt();
-	Serial.print("Start\n");	
-	for (;;) // main loop
-	{
-		if (newSecond)
-		{						
-			newSecond = false;
-			//check time
-			seconds ++;
-			if (seconds == 60)
-			{
-				seconds = 0;
-				minutes++;
-				if (minutes == 60)
-				{
-					minutes = 0;
-					hours++;
-				}				
-			}
-			//print time
-			Serial.write(' ');
+	Serial.write(' ');
 			if (hours < 10) Serial.write('0');
 			Serial.print(hours);			
 			Serial.write(':');
@@ -56,7 +40,40 @@ int main()
 			if (seconds < 10) Serial.write('0');
 			Serial.print(seconds);
 			Serial.write('\r');					
-		}		
+}
+
+void calcTime()
+{
+	for (;;) // main loop
+		{
+			if (newSecond)
+			{						
+				newSecond = false;
+				//check time
+				seconds ++;
+				if (seconds == 60)
+				{
+					seconds = 0;
+					minutes++;
+					if (minutes == 60)
+					{
+						minutes = 0;
+						hours++;
+					}				
+				}
+				printTime();
+			}		
+		}
+}
+
+int main()
+{	
+	Serial.print("Start\n");	
+	initSwitcher(); // start task switcher
+	printTime();
+	startNewTask(&calcTime, timeTaskStack, TIME_TASK_STACK_SIZE);
+	for (;;) // main loop = task0
+	{
 		//char ch = Serial.read();
 		//Serial.write(ch);
 	}

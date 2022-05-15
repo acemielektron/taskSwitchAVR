@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "taskUtil.h"
 
 // structure to hold our task variables
 // if we have more ram, add stack min/max bounds and do overflow/underflow checks

@@ -4,7 +4,6 @@
 #include <avr/wdt.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "util.h"
 #include "taskCtl.h"
 
 #define DATASIZE 1000 // size of allocated global or static variables
@@ -71,6 +70,7 @@ void calcTime()
 
 int main()
 {	
+	Serial.begin(115200);
 	Serial.print("Start\n");	
 	initSwitcher(DATASIZE, MAIN_STACK_SIZE); // start task switcher
 	printTime();

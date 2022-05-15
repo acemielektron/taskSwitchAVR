@@ -26,12 +26,8 @@
 //if stdio is included stdio streams will be initialized for printf/scanf functions
 #include <stdio.h> //sprintf & printf
 #include <string.h> //strlen
-
-#if defined (__AVR_ATmega328P__)
-    #define rxReady (UCSR0A & (1 << RXC0))
-#elif defined (__AVR_ATmega32U4__)
+#if defined (__AVR_ATmega32U4__)
     #include "USBtoSerial.h"
-    #define rxReady Serial.rcvRdy()
 #endif //defined (__ATmega32U4__)
     
 //https://forum.arduino.cc/t/what-does-the-f-do-exactly/89384
@@ -59,12 +55,17 @@ class UART{
 
 class UART0 : public UART{
     public:
-    void init(uint32_t);
+    void begin(uint32_t);
+    int writeChar(char);
     int write(char);
     int read(void);
-#if defined (__AVR_ATmega32U4__)
+#if defined (_SIMULAVR_)
+    bool rcvRdy() { return true; }    
+#elif defined (__AVR_ATmega32U4__)
     bool rcvRdy() {usb_cdc_loop(); return !RingBuffer_IsEmpty(&USBtoUSART_Buffer);};
-#endif //defined (__ATmega32U4__)    
+#elif defined (__AVR_ATmega328P__)
+    bool rcvRdy() { return (UCSR0A & (1 << RXC0)) ? true:false; }    
+#endif
 };
 
 extern class UART0 Serial;

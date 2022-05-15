@@ -90,8 +90,9 @@ miliSec:	.word 0
 .section .text
 .global TIMER0_COMPA_vect		; define ISR
 TIMER0_COMPA_vect:saveContext
-                  sbic  _SFR_IO_ADDR(TIFR0), OCF0A ; check OCF0A flag is set
-                  rjmp  loadNextTask    ; if not jump to loadNextTask
+                  lds   r16, TCNT0      ; did we enter here by ms interrupt or YIELD() ?
+                  and   r16, r16        ; if TIMER0 counter is 0 we entered by interrupt
+                  brne  loadNextTask    ; if not jump to loadNextTask
 msStart:          lds   r24, miliSec
                   lds   r25, miliSec+1
                   adiw  r24, 1 ; miliSec++;

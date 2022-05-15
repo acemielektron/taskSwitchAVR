@@ -7,6 +7,10 @@
 #include "util.h"
 #include "taskCtl.h"
 
+#define DATASIZE 1000 // size of allocated global or static variables
+#define MAIN_STACK_SIZE  200 // stack reserved for main task
+#define TIME_TASK_STACK_SIZE	48
+
 /*
 void setup()
 {
@@ -23,9 +27,7 @@ void setup()
 	asm("sei\n"); // Enable interrupts
 }
 */
-#define TIME_TASK_STACK_SIZE	50
 
-uint8_t timeTaskStack[TIME_TASK_STACK_SIZE];
 int8_t seconds = 0, minutes = 0, hours = 0;
 
 void printTime()
@@ -63,19 +65,21 @@ void calcTime()
 				}
 				printTime();
 			}		
+			YIELD();
 		}
 }
 
 int main()
 {	
 	Serial.print("Start\n");	
-	initSwitcher(); // start task switcher
+	initSwitcher(DATASIZE, MAIN_STACK_SIZE); // start task switcher
 	printTime();
-	startNewTask(&calcTime, timeTaskStack, TIME_TASK_STACK_SIZE);
+	startNewTask(&calcTime, TIME_TASK_STACK_SIZE);
 	for (;;) // main loop = task0
 	{
 		//char ch = Serial.read();
 		//Serial.write(ch);
+		YIELD();
 	}
 	return 0;
 }
